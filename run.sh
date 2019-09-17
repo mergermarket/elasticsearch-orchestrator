@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
+
+set -e
 
 if [ "$WAIT_FOR_ES" == "true" ]
 then
