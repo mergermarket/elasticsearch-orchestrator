@@ -4,7 +4,8 @@ import { manageIndices, indicesNeedUpdating, disableAutomaticIndexCreation, scal
 import { config } from './env'
 import logger from './logger'
 
-const mappingFiles = fs.readdirSync('./mappings')
+const mappingsFolder = '/mappings'
+const mappingFiles = fs.readdirSync(mappingsFolder)
 
 async function main () {
   const client = await createElasticsearchClient(config.ELASTICSEARCH_ENDPOINT)
@@ -19,7 +20,7 @@ async function main () {
   if (config.SCALE_DOWN_SERVICE) {
     await scaleDownIngesterService(config.SCALE_DOWN_SERVICE)
   }
-  await manageIndices(client, mappingFiles, './mappings')
+  await manageIndices(client, mappingFiles, mappingsFolder)
 }
  
 main().catch(err => {

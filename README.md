@@ -13,7 +13,7 @@ If you have a `mappings/` folder in the current directory and valid AWS credenti
 
 ```sh
 docker run \
-  -v $PWD/mappings:mappings \
+  -v $PWD/mappings:/mappings \
   -e ELASTICSEARCH_ENDPOINT=https://my.aws.es.endpoint \
   -e SCALE_DOWN_SERVICE=ecs-service-to-scale-down-first \
   -e AWS_ACCESS_KEY_ID \
