@@ -5,6 +5,7 @@ export const config = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   ELASTICSEARCH_ENDPOINT: process.env.ELASTICSEARCH_ENDPOINT || '',
   SCALE_DOWN_SERVICE: process.env.SCALE_DOWN_SERVICE || '',
+  NUMBER_OF_SHARDS: process.env.NUMBER_OF_SHARDS || 1,
 }
 
 export type Config = typeof config

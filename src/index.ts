@@ -6,6 +6,10 @@ import logger from './logger'
 
 const mappingsFolder = '/mappings'
 const mappingFiles = fs.readdirSync(mappingsFolder)
+if (mappingFiles.length == 0) {
+  console.error('no mapping files')
+  process.exit(1)
+}
 
 async function main () {
   const client = await createElasticsearchClient(config.ELASTICSEARCH_ENDPOINT)

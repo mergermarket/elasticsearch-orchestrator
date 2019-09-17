@@ -7,4 +7,4 @@ then
   yarn wait-on $ELASTICSEARCH_ENDPOINT
 fi
 
-yarn
+yarn start

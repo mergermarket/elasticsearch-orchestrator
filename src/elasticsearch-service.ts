@@ -5,6 +5,7 @@ import {
   awsGetCredentials,
 } from '@acuris/aws-es-connection'
 
+import { config } from './env'
 import logger from './logger'
 
 const REINDEX_POLLING_MS = 3000
@@ -142,7 +143,11 @@ export const createIndex = async (
   try {
     const { body } = await client.indices.create({
       index,
-      body: { mappings: mapping },
+        body: {
+          mappings: mapping,
+          // eslint-disable-next-line @typescript-eslint/camelcase
+          settings: { number_of_shards: config.NUMBER_OF_SHARDS },
+        },
       // eslint-disable-next-line @typescript-eslint/camelcase
       include_type_name: false,
     })
