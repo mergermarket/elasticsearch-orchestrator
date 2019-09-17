@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "outDir": "dist",
+    "lib": ["es2017"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2017",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "types": ["jest", "node"]
+  },
+  // "include": ["src"]
+}
