@@ -6,6 +6,7 @@ export const config = {
   ELASTICSEARCH_ENDPOINT: process.env.ELASTICSEARCH_ENDPOINT || '',
   SCALE_DOWN_SERVICE: process.env.SCALE_DOWN_SERVICE || '',
   NUMBER_OF_SHARDS: process.env.NUMBER_OF_SHARDS || 1,
+  AWS_REGION: process.env.AWS_DEFAULT_REGION || ''
 }
 
 export type Config = typeof config
