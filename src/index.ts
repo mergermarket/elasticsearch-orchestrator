@@ -36,7 +36,10 @@ async function main() {
   if (config.SCALE_DOWN_SERVICE) {
     await scaleDownIngesterService(config.SCALE_DOWN_SERVICE)
   }
-  await manageIndices(client, mappingFiles, mappingsFolder)
+
+  if (config.MANAGE_INDICES === 'true') {
+    await manageIndices(client, mappingFiles, mappingsFolder)
+  }
 }
 
 main().catch(err => {
