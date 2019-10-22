@@ -6,17 +6,17 @@ import {
   manageIndices,
   indicesNeedUpdating,
   disableAutomaticIndexCreation,
-  scaleDownIngesterService
+  scaleDownIngesterService,
 } from './orchestrator'
 import { config } from './env'
 import logger from './logger'
 
 logger.info(`Setting AWS region to ${config.AWS_REGION}`)
 AWS.config.update({
-  region: config.AWS_REGION
+  region: config.AWS_REGION,
 })
 
-const mappingsFolder = '/mappings'
+const mappingsFolder = config.MAPPINGS_FOLDER || '/mappings'
 const mappingFiles = fs.readdirSync(mappingsFolder)
 if (mappingFiles.length == 0) {
   console.error('no mapping files')
