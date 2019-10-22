@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { Client } from '@elastic/elasticsearch'
 import {
   createAWSConnection,
@@ -39,7 +40,6 @@ const startReindex = async (
       body: { task, failures },
     } = await client.reindex({
       refresh: true,
-      // eslint-disable-next-line @typescript-eslint/camelcase
       wait_for_completion: false,
       body: {
         source: {
@@ -47,7 +47,6 @@ const startReindex = async (
         },
         dest: {
           index: destIndex,
-          // eslint-disable-next-line @typescript-eslint/camelcase
           version_type: 'internal',
         },
       },
@@ -84,7 +83,6 @@ export const getMostRecentIndex: (
   const [latestIndex] = Object.keys(body)
     .map((index: string) => ({
       index,
-      // eslint-disable-next-line @typescript-eslint/camelcase
       creation_date: body[index].settings.index.creation_date,
     }))
     .sort((a, b) => (a.creation_date > b.creation_date ? -1 : 1))
@@ -98,7 +96,6 @@ export const pollReindexForCompletion = async (
   pollingDelay: number = REINDEX_POLLING_MS,
 ) => {
   const { body } = await client.tasks.get({
-    // eslint-disable-next-line @typescript-eslint/camelcase
     task_id: taskId,
   })
 
@@ -143,12 +140,22 @@ export const createIndex = async (
   try {
     const { body } = await client.indices.create({
       index,
-        body: {
-          mappings: mapping,
-          // eslint-disable-next-line @typescript-eslint/camelcase
-          settings: { number_of_shards: config.NUMBER_OF_SHARDS },
+      body: {
+        mappings: mapping,
+        settings: {
+          number_of_shards: config.NUMBER_OF_SHARDS,
+          analysis: {
+            analyzer: {
+              standard_nohtml_tags: {
+                type: 'custom',
+                tokenizer: 'standard',
+                char_filter: ['html_strip'],
+                filter: ['lowercase'],
+              },
+            },
+          },
         },
-      // eslint-disable-next-line @typescript-eslint/camelcase
+      },
       include_type_name: false,
     })
     logger.info(`Created index ${body.index}`)

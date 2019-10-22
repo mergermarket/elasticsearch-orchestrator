@@ -7,7 +7,8 @@ export const config = {
   SCALE_DOWN_SERVICE: process.env.SCALE_DOWN_SERVICE || '',
   NUMBER_OF_SHARDS: process.env.NUMBER_OF_SHARDS || 1,
   AWS_REGION: process.env.AWS_DEFAULT_REGION || '',
-  MANAGE_INDICES: process.env.MANAGE_INDICES || undefined
+  MANAGE_INDICES: process.env.MANAGE_INDICES || undefined,
+  MAPPINGS_FOLDER: process.env.MAPPINGS_FOLDER,
 }
 
 export type Config = typeof config
