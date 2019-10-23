@@ -61,6 +61,8 @@ describe('elastic orchestrator', () => {
     const indexConfigFile = 'index-00001.json'
     const indexConfigFileFolder = './src/__fixtures__'
 
+    let client: Client
+
     const createBulkPayload = (count: number) =>
       new Array(count)
         .fill(0)
@@ -75,11 +77,7 @@ describe('elastic orchestrator', () => {
         .join('\n') + '\n'
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const insertBulk = async (
-      client: Client,
-      index: string | undefined,
-      data: any,
-    ) => {
+    const insertBulk = async (index: string | undefined, data: any) => {
       if (!index) return
 
       await client.bulk({
@@ -98,7 +96,19 @@ describe('elastic orchestrator', () => {
       return data.hits.hits.map((doc: any) => doc._source)
     }
 
-    let client: Client
+    const getIndexSettings = async (index: string) => {
+      const {
+        body: {
+          [index]: {
+            settings: { index: indexSettings },
+          },
+        },
+      } = await client.indices.getSettings({
+        index,
+      })
+
+      return indexSettings
+    }
 
     beforeEach(async () => {
       client = await createElasticsearchClient(config.ELASTICSEARCH_ENDPOINT)
@@ -135,7 +145,7 @@ describe('elastic orchestrator', () => {
       const indices = await getExistingIndices(client)
       const latestIndex = await getMostRecentIndex(client, indices)
 
-      await insertBulk(client, latestIndex, createBulkPayload(5))
+      await insertBulk(latestIndex, createBulkPayload(5))
 
       await manageIndices(
         client,
@@ -149,22 +159,14 @@ describe('elastic orchestrator', () => {
       expect(newIndexDocuments).toEqual(oldIndexDocuments)
     })
 
-    it('will create the index using settings from the configuration file', async () => {
+    it('will create an index using settings from a configuration file', async () => {
       const { settings: configSettings } = JSON.parse(
         readFileSync(`${indexConfigFileFolder}/${indexConfigFile}`, 'utf-8'),
       )
 
       await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
 
-      const {
-        body: {
-          [indexToCreate]: {
-            settings: { index: indexSettings },
-          },
-        },
-      } = await client.indices.getSettings({
-        index: indexToCreate,
-      })
+      const indexSettings = await getIndexSettings(indexToCreate)
 
       expect(indexSettings).toMatchObject(configSettings)
     })
