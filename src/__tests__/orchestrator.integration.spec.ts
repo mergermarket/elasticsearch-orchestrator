@@ -9,6 +9,7 @@ import {
 } from '../elasticsearch-service'
 import { config } from '../env'
 import axios from 'axios'
+import { readFileSync } from 'fs'
 
 describe('elastic orchestrator', () => {
   describe('indices need updating', () => {
@@ -85,7 +86,7 @@ describe('elastic orchestrator', () => {
         index,
         type: '_doc',
         body: data,
-        refresh: 'true',
+        refresh: 'wait_for',
       })
     }
 
@@ -146,6 +147,26 @@ describe('elastic orchestrator', () => {
       const newIndexDocuments = await getIndexDocuments('index-00002')
 
       expect(newIndexDocuments).toEqual(oldIndexDocuments)
+    })
+
+    it('will create the index using settings from the configuration file', async () => {
+      const { settings: configSettings } = JSON.parse(
+        readFileSync(`${indexConfigFileFolder}/${indexConfigFile}`, 'utf-8'),
+      )
+
+      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+
+      const {
+        body: {
+          [indexToCreate]: {
+            settings: { index: indexSettings },
+          },
+        },
+      } = await client.indices.getSettings({
+        index: indexToCreate,
+      })
+
+      expect(indexSettings).toMatchObject(configSettings)
     })
   })
 })
