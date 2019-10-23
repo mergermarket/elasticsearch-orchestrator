@@ -135,26 +135,21 @@ export const reindex = async (
 export const createIndex = async (
   client: Client,
   index: string,
-  mapping: {},
+  indexConfig: {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    mappings: any
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    settings: any
+  },
 ): Promise<string> => {
   try {
+    const { mappings, settings } = indexConfig
+
     const { body } = await client.indices.create({
       index,
       body: {
-        mappings: mapping,
-        settings: {
-          number_of_shards: config.NUMBER_OF_SHARDS,
-          analysis: {
-            analyzer: {
-              standard_nohtml_tags: {
-                type: 'custom',
-                tokenizer: 'standard',
-                char_filter: ['html_strip'],
-                filter: ['lowercase'],
-              },
-            },
-          },
-        },
+        mappings,
+        settings: { ...settings, number_of_shards: config.NUMBER_OF_SHARDS },
       },
       include_type_name: false,
     })

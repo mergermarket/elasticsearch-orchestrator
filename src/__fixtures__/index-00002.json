@@ -1,8 +1,10 @@
 {
-  "dynamic": false,
-  "properties": {
-    "name": {
-      "type": "keyword"
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "name": {
+        "type": "keyword"
+      }
     }
   }
 }

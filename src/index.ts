@@ -16,10 +16,10 @@ AWS.config.update({
   region: config.AWS_REGION,
 })
 
-const mappingsFolder = config.MAPPINGS_FOLDER || '/mappings'
-const mappingFiles = fs.readdirSync(mappingsFolder)
-if (mappingFiles.length == 0) {
-  console.error('no mapping files')
+const indexConfigFolder = config.INDEX_CONFIG_FOLDER || '/index-configs'
+const indexConfigFiles = fs.readdirSync(indexConfigFolder)
+if (indexConfigFiles.length == 0) {
+  console.error('no index config files')
   process.exit(1)
 }
 
@@ -28,7 +28,7 @@ async function main() {
 
   await disableAutomaticIndexCreation(client)
 
-  if (!(await indicesNeedUpdating(client, mappingFiles))) {
+  if (!(await indicesNeedUpdating(client, indexConfigFiles))) {
     logger.info(`indexes up to date`)
     return
   }
@@ -38,7 +38,7 @@ async function main() {
   }
 
   if (config.MANAGE_INDICES === 'true') {
-    await manageIndices(client, mappingFiles, mappingsFolder)
+    await manageIndices(client, indexConfigFiles, indexConfigFolder)
   }
 }
 
