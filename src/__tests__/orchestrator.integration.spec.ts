@@ -74,14 +74,18 @@ describe('elastic orchestrator', () => {
         .join('\n') + '\n'
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const insertBulk = async (index: string | undefined, data: any) => {
-      await axios.post(
-        `${config.ELASTICSEARCH_ENDPOINT}/${index}/_bulk?refresh=wait_for`,
-        data,
-        {
-          headers: { 'Content-Type': 'application/json' },
-        },
-      )
+    const insertBulk = async (
+      client: Client,
+      index: string | undefined,
+      data: any,
+    ) => {
+      if (!index) return
+
+      await client.bulk({
+        index,
+        type: '_doc',
+        body: data,
+      })
     }
 
     const getIndexDocuments = async (index: string) => {
@@ -129,7 +133,7 @@ describe('elastic orchestrator', () => {
       const indices = await getExistingIndices(client)
       const latestIndex = await getMostRecentIndex(client, indices)
 
-      await insertBulk(latestIndex, createBulkPayload(5))
+      await insertBulk(client, latestIndex, createBulkPayload(5))
 
       await manageIndices(
         client,

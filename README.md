@@ -31,3 +31,9 @@ docker run \
   -e AWS_DEFAULT_REGION \
   mergermarket/elasticsearch-orchestrator
 ```
+
+## Testing
+
+```sh
+./scripts/integration-test.sh
+```

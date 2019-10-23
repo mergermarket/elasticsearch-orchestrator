@@ -1,0 +1,27 @@
+version: '3.2'
+services:
+  integration_test:
+    build:
+      context: .
+    restart: always
+    environment:
+      - ELASTICSEARCH_ENDPOINT=http://elasticsearch:4571
+      - MANAGE_INDICES=true
+      - LOG_LEVEL=info
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - AWS_SESSION_TOKEN=local
+    depends_on:
+      - elasticsearch
+    entrypoint: "./scripts/wait-es-and-test.sh"
+
+  elasticsearch:
+    image: localstack/localstack:latest
+    container_name: localstack_es
+    ports:
+      - '4563-4599:4563-4599'
+      - '8055:8080'
+    environment:
+      - SERVICES=elasticsearch
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
