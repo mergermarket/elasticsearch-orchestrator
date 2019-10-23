@@ -35,5 +35,5 @@ docker run \
 ## Testing
 
 ```sh
-./scripts./integration-test.sh
+./scripts/integration-test.sh
 ```
