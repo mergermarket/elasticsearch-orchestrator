@@ -14,43 +14,46 @@ import logger from './logger'
 const indexNameFromFilename = (filename: string) =>
   filename.substring(0, filename.length - 5)
 
-const mappingFromFile = (filename: string, mappingFileFolder: string) => {
-  const mappingBuffer = fs.readFileSync(`${mappingFileFolder}/${filename}`)
-  return JSON.parse(mappingBuffer.toString())
+const indexConfigFromFile = (
+  filename: string,
+  indexConfigFileFolder: string,
+) => {
+  const configBuffer = fs.readFileSync(`${indexConfigFileFolder}/${filename}`)
+  return JSON.parse(configBuffer.toString())
 }
 
-const indicesMappingInconsistency = (
-  mappingIndexNames: string[],
+const indicesConfigInconsistency = (
+  configIndexNames: string[],
   existingIndices: string[],
 ) => {
-  const intersection = mappingIndexNames.filter(index =>
+  const intersection = configIndexNames.filter(index =>
     existingIndices.includes(index),
   )
 
-  return intersection.length !== mappingIndexNames.length
+  return intersection.length !== configIndexNames.length
 }
 
 export const indicesNeedUpdating = async (
   client: Client,
-  mappingFiles: string[],
+  indexConfigFiles: string[],
 ) => {
   const existingIndices = await getExistingIndices(client)
   logger.info(`Existing indices: ${existingIndices.join(',')}`)
 
-  if (existingIndices.length !== mappingFiles.length) {
+  if (existingIndices.length !== indexConfigFiles.length) {
     logger.info(`Indices need to be updated`)
     return true
   }
 
-  const mappingIndexNames = mappingFiles.map(indexNameFromFilename)
+  const configIndexNames = indexConfigFiles.map(indexNameFromFilename)
 
-  if (indicesMappingInconsistency(mappingIndexNames, existingIndices)) {
+  if (indicesConfigInconsistency(configIndexNames, existingIndices)) {
     const indices = existingIndices.join(',')
-    const mappings = mappingIndexNames.join(',')
+    const configs = configIndexNames.join(',')
     logger.error(
-      `Indices and mappings inconsistent. Indices: [${indices}]. Mapping: [${mappings}]`,
+      `Indices and configurations inconsistent. Indices: [${indices}]. Configurations: [${configs}]`,
     )
-    throw Error('Indices are out of sync with mapping files')
+    throw Error('Indices are out of sync with configuration files')
   }
 
   return false
@@ -58,8 +61,8 @@ export const indicesNeedUpdating = async (
 
 export const manageIndices = async (
   client: Client,
-  mappingFiles: string[],
-  mappingFileFolder: string,
+  indexConfigFiles: string[],
+  indexConfigFileFolder: string,
 ) => {
   const existingIndices = await getExistingIndices(client)
   const mostRecentIndex = await getMostRecentIndex(client, existingIndices)
@@ -70,7 +73,7 @@ export const manageIndices = async (
     }`,
   )
 
-  const indicesToFilenames: Record<string, string> = mappingFiles.reduce(
+  const indicesToFilenames: Record<string, string> = indexConfigFiles.reduce(
     (acc, file) => ({
       ...acc,
       [indexNameFromFilename(file)]: file,
@@ -85,7 +88,7 @@ export const manageIndices = async (
       return createIndex(
         client,
         index,
-        mappingFromFile(indicesToFilenames[index], mappingFileFolder),
+        indexConfigFromFile(indicesToFilenames[index], indexConfigFileFolder),
       )
     })
 

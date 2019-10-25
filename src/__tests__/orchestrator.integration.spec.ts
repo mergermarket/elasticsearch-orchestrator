@@ -9,12 +9,13 @@ import {
 } from '../elasticsearch-service'
 import { config } from '../env'
 import axios from 'axios'
+import { readFileSync } from 'fs'
 
 describe('elastic orchestrator', () => {
   describe('indices need updating', () => {
-    const indexMappingFile = 'index-00001.json'
-    const anotherMappingFile = 'index-00002.json'
-    const mappingFileFolder = './src/__fixtures__'
+    const indexConfigFile = 'index-00001.json'
+    const anotherConfigFile = 'index-00002.json'
+    const indexConfigFileFolder = './src/__fixtures__'
 
     let client: Client
 
@@ -29,27 +30,27 @@ describe('elastic orchestrator', () => {
       await client.close()
     })
 
-    it('indicates indices need managing if we have a mapping file without a corresponding index', async () => {
-      const shouldUpdate = await indicesNeedUpdating(client, [indexMappingFile])
+    it('indicates indices need managing if we have a configuration file without a corresponding index', async () => {
+      const shouldUpdate = await indicesNeedUpdating(client, [indexConfigFile])
       expect(shouldUpdate).toBe(true)
     })
 
-    it('indicates indices need managing if we have an index without a corresponding mapping file', async () => {
-      await manageIndices(client, [indexMappingFile], mappingFileFolder)
+    it('indicates indices need managing if we have an index without a corresponding configuration file', async () => {
+      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
       const shouldUpdate = await indicesNeedUpdating(client, [])
       expect(shouldUpdate).toBe(true)
     })
 
-    it('indicates indices do not need managing if only indices with mapping files exist', async () => {
-      await manageIndices(client, [indexMappingFile], mappingFileFolder)
-      const shouldUpdate = await indicesNeedUpdating(client, [indexMappingFile])
+    it('indicates indices do not need managing if only indices with configuration files exist', async () => {
+      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+      const shouldUpdate = await indicesNeedUpdating(client, [indexConfigFile])
       expect(shouldUpdate).toBe(false)
     })
 
-    it('will throw an error if the count of mapping files is the same as the indices but the index names do not match', async () => {
+    it('will throw an error if the count of configuration files is the same as the indices but the index names do not match', async () => {
       const throws = async () => {
-        await manageIndices(client, [indexMappingFile], mappingFileFolder)
-        await indicesNeedUpdating(client, [anotherMappingFile])
+        await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+        await indicesNeedUpdating(client, [anotherConfigFile])
       }
       await expect(throws()).rejects.toThrow()
     })
@@ -57,8 +58,10 @@ describe('elastic orchestrator', () => {
 
   describe('managing indexes', () => {
     const indexToCreate = 'index-00001'
-    const indexMappingFile = 'index-00001.json'
-    const mappingFileFolder = './src/__fixtures__'
+    const indexConfigFile = 'index-00001.json'
+    const indexConfigFileFolder = './src/__fixtures__'
+
+    let client: Client
 
     const createBulkPayload = (count: number) =>
       new Array(count)
@@ -74,17 +77,14 @@ describe('elastic orchestrator', () => {
         .join('\n') + '\n'
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const insertBulk = async (
-      client: Client,
-      index: string | undefined,
-      data: any,
-    ) => {
+    const insertBulk = async (index: string | undefined, data: any) => {
       if (!index) return
 
       await client.bulk({
         index,
         type: '_doc',
         body: data,
+        refresh: 'wait_for',
       })
     }
 
@@ -96,7 +96,19 @@ describe('elastic orchestrator', () => {
       return data.hits.hits.map((doc: any) => doc._source)
     }
 
-    let client: Client
+    const getIndexSettings = async (index: string) => {
+      const {
+        body: {
+          [index]: {
+            settings: { index: indexSettings },
+          },
+        },
+      } = await client.indices.getSettings({
+        index,
+      })
+
+      return indexSettings
+    }
 
     beforeEach(async () => {
       client = await createElasticsearchClient(config.ELASTICSEARCH_ENDPOINT)
@@ -109,42 +121,54 @@ describe('elastic orchestrator', () => {
       await client.close()
     })
 
-    it('will create an index for a given mapping file if it did not exist', async () => {
-      await manageIndices(client, [indexMappingFile], mappingFileFolder)
+    it('will create an index for a given configuration file if it did not exist', async () => {
+      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
 
       const indices = await getExistingIndices(client)
       expect(indices).toContainEqual(indexToCreate)
     })
 
-    it('will delete an orphaned index with no mapping file', async () => {
-      await manageIndices(client, ['index-00000.json'], mappingFileFolder)
+    it('will delete an orphaned index with no configuration file', async () => {
+      await manageIndices(client, ['index-00000.json'], indexConfigFileFolder)
       let indices = await getExistingIndices(client)
       expect(indices).toContain('index-00000')
 
-      await manageIndices(client, [indexMappingFile], mappingFileFolder)
+      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
       indices = await getExistingIndices(client)
       expect(indices).not.toContain('index-00000')
     })
 
     it('will trigger a reindex from the most recent index to the newly added index', async () => {
-      const existingMapping = ['index-00000.json', 'index-00001.json']
-      await manageIndices(client, existingMapping, mappingFileFolder)
+      const existingConfig = ['index-00000.json', 'index-00001.json']
+      await manageIndices(client, existingConfig, indexConfigFileFolder)
 
       const indices = await getExistingIndices(client)
       const latestIndex = await getMostRecentIndex(client, indices)
 
-      await insertBulk(client, latestIndex, createBulkPayload(5))
+      await insertBulk(latestIndex, createBulkPayload(5))
 
       await manageIndices(
         client,
-        [...existingMapping, 'index-00002.json'],
-        mappingFileFolder,
+        [...existingConfig, 'index-00002.json'],
+        indexConfigFileFolder,
       )
 
       const oldIndexDocuments = await getIndexDocuments('index-00001')
       const newIndexDocuments = await getIndexDocuments('index-00002')
 
       expect(newIndexDocuments).toEqual(oldIndexDocuments)
+    })
+
+    it('will create an index using settings from a configuration file', async () => {
+      const { settings: configSettings } = JSON.parse(
+        readFileSync(`${indexConfigFileFolder}/${indexConfigFile}`, 'utf-8'),
+      )
+
+      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+
+      const indexSettings = await getIndexSettings(indexToCreate)
+
+      expect(indexSettings).toMatchObject(configSettings)
     })
   })
 })

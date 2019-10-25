@@ -1,8 +1,23 @@
 {
+  "mappings": {
     "dynamic": false,
     "properties": {
-        "name": {
-            "type" : "text"
+      "name": {
+        "type": "text"
+      }
+    }
+  },
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "standard_nohtml_tags": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "char_filter": ["html_strip"],
+          "filter": ["lowercase"]
         }
+      }
     }
   }
+}
+

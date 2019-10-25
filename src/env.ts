@@ -8,7 +8,7 @@ export const config = {
   NUMBER_OF_SHARDS: process.env.NUMBER_OF_SHARDS || 1,
   AWS_REGION: process.env.AWS_DEFAULT_REGION || '',
   MANAGE_INDICES: process.env.MANAGE_INDICES || undefined,
-  MAPPINGS_FOLDER: process.env.MAPPINGS_FOLDER,
+  INDEX_CONFIG_FOLDER: process.env.INDEX_CONFIG_FOLDER,
 }
 
 export type Config = typeof config
