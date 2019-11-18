@@ -3,7 +3,7 @@ name: Lint, Test
 jobs:
   build:
     name: Build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v1
