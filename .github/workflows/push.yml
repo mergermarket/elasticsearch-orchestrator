@@ -1,0 +1,23 @@
+on: push
+name: Lint, Test
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v1
+
+      - name: Set Node version to 12
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Build
+        run: yarn build
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Test
+        run: ./scripts/integration-test.sh

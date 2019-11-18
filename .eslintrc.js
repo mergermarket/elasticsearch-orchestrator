@@ -30,6 +30,6 @@ module.exports = {
         allowTypedFunctionExpressions: false,
       },
     ],
-    '@typescript-eslint/array-type': ['error', 'array-simple'],
+    '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
   },
 }
