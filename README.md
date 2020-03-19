@@ -23,6 +23,7 @@ docker run \
   -v $PWD/mappings:/mappings \
   -e ELASTICSEARCH_ENDPOINT=https://my.aws.es.endpoint \
   -e NUMBER_OF_SHARDS=1 \
+  -e NUMBER_OF_REPLICAS=1 \
   -e SCALE_DOWN_SERVICE=ecs-service-to-scale-down-first \
   -e MANAGE_INDICES=true \
   -e AWS_ACCESS_KEY_ID \

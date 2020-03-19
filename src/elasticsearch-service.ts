@@ -149,7 +149,11 @@ export const createIndex = async (
       index,
       body: {
         mappings,
-        settings: { ...settings, number_of_shards: config.NUMBER_OF_SHARDS },
+        settings: {
+          ...settings,
+          number_of_shards: config.NUMBER_OF_SHARDS,
+          number_of_replicas: config.NUMBER_OF_REPLICAS,
+        },
       },
       include_type_name: false,
     })
