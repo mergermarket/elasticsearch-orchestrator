@@ -5,8 +5,9 @@ services:
       context: .
     restart: always
     environment:
-      - ELASTICSEARCH_ENDPOINT=http://elasticsearch:4571
+      - ELASTICSEARCH_ENDPOINT=http://elasticsearch:9200
       - MANAGE_INDICES=true
+      - WAIT_TIMEOUT=10000
       - LOG_LEVEL=info
       - AWS_ACCESS_KEY_ID=local
       - AWS_SECRET_ACCESS_KEY=local
@@ -16,12 +17,15 @@ services:
     entrypoint: "./scripts/wait-es-and-test.sh"
 
   elasticsearch:
-    image: localstack/localstack:latest
-    container_name: localstack_es
-    ports:
-      - '4563-4599:4563-4599'
-      - '8055:8080'
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.1.1
     environment:
-      - SERVICES=elasticsearch
-      - DEBUG=1
-      - DATA_DIR=/tmp/localstack/data
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "action.auto_create_index=true"
+    ports:
+      - "9200"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
