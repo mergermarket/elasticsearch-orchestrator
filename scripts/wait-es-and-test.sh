@@ -2,6 +2,6 @@
 
 set -e
 
-yarn wait-on $ELASTICSEARCH_ENDPOINT
+yarn wait-on -t "$WAIT_TIMEOUT" "$ELASTICSEARCH_ENDPOINT"
 
 yarn test
