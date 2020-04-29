@@ -47,12 +47,18 @@ describe('elastic orchestrator', () => {
       expect(shouldUpdate).toBe(false)
     })
 
-    it('will throw an error if the count of configuration files is the same as the indices but the index names do not match', async () => {
-      const throws = async () => {
-        await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
-        await indicesNeedUpdating(client, [anotherConfigFile])
-      }
-      await expect(throws()).rejects.toThrow()
+    it('indicates indices do need managing if local indices are different from remote ones', async () => {
+      const newLocalConfig = 'index-00003.json'
+      await manageIndices(
+        client,
+        [indexConfigFile, anotherConfigFile],
+        indexConfigFileFolder,
+      )
+      const shouldUpdate = await indicesNeedUpdating(client, [
+        indexConfigFile,
+        newLocalConfig,
+      ])
+      expect(shouldUpdate).toBe(true)
     })
   })
 
