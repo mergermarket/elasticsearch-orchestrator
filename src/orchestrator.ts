@@ -11,9 +11,6 @@ import {
 } from './elasticsearch-service'
 import logger from './logger'
 
-const indexNameFromFilename = (filename: string) =>
-  filename.substring(0, filename.length - 5)
-
 const indexConfigFromFile = (
   filename: string,
   indexConfigFileFolder: string,
@@ -22,16 +19,11 @@ const indexConfigFromFile = (
   return JSON.parse(configBuffer.toString())
 }
 
-const indicesConfigInconsistency = (
-  configIndexNames: string[],
-  existingIndices: string[],
-) => {
-  const intersection = configIndexNames.filter(index =>
-    existingIndices.includes(index),
-  )
-
-  return intersection.length !== configIndexNames.length
-}
+const excludeExtension = (filename: string) =>
+  filename
+    .split('.')
+    .slice(0, -1)
+    .join('.')
 
 export const indicesNeedUpdating = async (
   client: Client,
@@ -40,20 +32,15 @@ export const indicesNeedUpdating = async (
   const existingIndices = await getExistingIndices(client)
   logger.info(`Existing indices: ${existingIndices.join(',')}`)
 
-  if (existingIndices.length !== indexConfigFiles.length) {
+  if (
+    indexConfigFiles.length !== existingIndices.length ||
+    indexConfigFiles.some(
+      localIndex =>
+        existingIndices.indexOf(excludeExtension(localIndex)) === -1,
+    )
+  ) {
     logger.info(`Indices need to be updated`)
     return true
-  }
-
-  const configIndexNames = indexConfigFiles.map(indexNameFromFilename)
-
-  if (indicesConfigInconsistency(configIndexNames, existingIndices)) {
-    const indices = existingIndices.join(',')
-    const configs = configIndexNames.join(',')
-    logger.error(
-      `Indices and configurations inconsistent. Indices: [${indices}]. Configurations: [${configs}]`,
-    )
-    throw Error('Indices are out of sync with configuration files')
   }
 
   return false
@@ -76,7 +63,7 @@ export const manageIndices = async (
   const indicesToFilenames: Record<string, string> = indexConfigFiles.reduce(
     (acc, file) => ({
       ...acc,
-      [indexNameFromFilename(file)]: file,
+      [excludeExtension(file)]: file,
     }),
     {},
   )
