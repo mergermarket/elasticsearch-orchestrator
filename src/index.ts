@@ -10,6 +10,7 @@ import {
 } from './orchestrator'
 import { config } from './env'
 import logger from './logger'
+import { groupFileNames } from './helpers'
 
 logger.info(`Setting AWS region to ${config.AWS_REGION}`)
 AWS.config.update({
@@ -38,7 +39,12 @@ async function main() {
   }
 
   if (config.MANAGE_INDICES === 'true') {
-    await manageIndices(client, indexConfigFiles, indexConfigFolder)
+    const groupedConfigFiles = groupFileNames(indexConfigFiles)
+    await Promise.all(
+      Object.values(groupedConfigFiles).map(configFiles =>
+        manageIndices(client, configFiles, indexConfigFolder),
+      ),
+    )
   }
 }
 
