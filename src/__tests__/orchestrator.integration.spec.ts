@@ -69,15 +69,18 @@ describe('elastic orchestrator', () => {
 
     let client: Client
 
-    const createBulkPayload = (count: number) =>
+    const createBulkPayload = (
+      count: number,
+      bodyGenerator: (value: number) => object = value => ({
+        name: `name-${value}`,
+      }),
+    ) =>
       new Array(count)
         .fill(0)
         .map((_: undefined, value: number) => {
           return [
             JSON.stringify({ index: {} }),
-            JSON.stringify({
-              name: `name-${value}`,
-            }),
+            JSON.stringify(bodyGenerator(value)),
           ].join('\n')
         })
         .join('\n') + '\n'
@@ -161,6 +164,35 @@ describe('elastic orchestrator', () => {
 
       const oldIndexDocuments = await getIndexDocuments('index-00001')
       const newIndexDocuments = await getIndexDocuments('index-00002')
+
+      expect(newIndexDocuments).toEqual(oldIndexDocuments)
+    })
+
+    it('will trigger a reindex from the index with the same name for a new index', async () => {
+      const existingConfig = ['index-00001.json', 'another-index-00000.json']
+      await manageIndices(client, existingConfig, indexConfigFileFolder)
+
+      const indices = await getExistingIndices(client)
+      const latestIndex = await getMostRecentIndex(
+        client,
+        indices.filter(index => index.startsWith('another-index-')),
+      )
+
+      await insertBulk(
+        latestIndex,
+        createBulkPayload(4, value => ({
+          description: `description-${value}`,
+        })),
+      )
+
+      await manageIndices(
+        client,
+        [...existingConfig, 'another-index-00001.json'],
+        indexConfigFileFolder,
+      )
+
+      const oldIndexDocuments = await getIndexDocuments('another-index-00000')
+      const newIndexDocuments = await getIndexDocuments('another-index-00001')
 
       expect(newIndexDocuments).toEqual(oldIndexDocuments)
     })

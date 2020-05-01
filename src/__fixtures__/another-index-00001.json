@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "description": {
+        "type": "keyword"
+      }
+    }
+  }
+}
