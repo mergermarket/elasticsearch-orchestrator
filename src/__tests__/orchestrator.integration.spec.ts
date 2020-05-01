@@ -69,9 +69,11 @@ describe('elastic orchestrator', () => {
 
     let client: Client
 
+    type BodyGenerator = (value: number) => object
+
     const createBulkPayload = (
       count: number,
-      bodyGenerator: (value: number) => object = value => ({
+      bodyGenerator: BodyGenerator = value => ({
         name: `name-${value}`,
       }),
     ) =>
