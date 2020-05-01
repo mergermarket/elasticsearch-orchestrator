@@ -193,10 +193,16 @@ describe('elastic orchestrator', () => {
         indexConfigFileFolder,
       )
 
-      const oldIndexDocuments = await getIndexDocuments('another-index-00000')
-      const newIndexDocuments = await getIndexDocuments('another-index-00001')
+      const indexDocuments = await getIndexDocuments('index-00001')
+      const oldAnotherIndexDocuments = await getIndexDocuments(
+        'another-index-00000',
+      )
+      const newAnotherIndexDocuments = await getIndexDocuments(
+        'another-index-00001',
+      )
 
-      expect(newIndexDocuments).toEqual(oldIndexDocuments)
+      expect(newAnotherIndexDocuments).toEqual(oldAnotherIndexDocuments)
+      expect(newAnotherIndexDocuments).not.toEqual(indexDocuments)
     })
 
     it('will create an index using settings from a configuration file', async () => {
