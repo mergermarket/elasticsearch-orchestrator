@@ -175,7 +175,7 @@ describe('elastic orchestrator', () => {
       const indices = await getExistingIndices(client)
       const latestIndex = await getMostRecentIndex(
         client,
-        indices.filter(index => index.startsWith('another-index-')),
+        indices.filter(index => index.startsWith('another-index')),
       )
 
       await insertBulk(
