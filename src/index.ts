@@ -41,8 +41,13 @@ async function main() {
   if (config.MANAGE_INDICES === 'true') {
     const groupedConfigFiles = groupFileNames(indexConfigFiles)
     await Promise.all(
-      Object.values(groupedConfigFiles).map(configFiles =>
-        manageIndices(client, configFiles, indexConfigFolder),
+      Object.keys(groupedConfigFiles).map(prefix =>
+        manageIndices(
+          client,
+          prefix,
+          groupedConfigFiles[prefix],
+          indexConfigFolder,
+        ),
       ),
     )
   }

@@ -36,13 +36,23 @@ describe('elastic orchestrator', () => {
     })
 
     it('indicates indices need managing if we have an index without a corresponding configuration file', async () => {
-      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        [indexConfigFile],
+        indexConfigFileFolder,
+      )
       const shouldUpdate = await indicesNeedUpdating(client, [])
       expect(shouldUpdate).toBe(true)
     })
 
     it('indicates indices do not need managing if only indices with configuration files exist', async () => {
-      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        [indexConfigFile],
+        indexConfigFileFolder,
+      )
       const shouldUpdate = await indicesNeedUpdating(client, [indexConfigFile])
       expect(shouldUpdate).toBe(false)
     })
@@ -51,6 +61,7 @@ describe('elastic orchestrator', () => {
       const newLocalConfig = 'index-00003.json'
       await manageIndices(
         client,
+        'index',
         [indexConfigFile, anotherConfigFile],
         indexConfigFileFolder,
       )
@@ -133,25 +144,45 @@ describe('elastic orchestrator', () => {
     })
 
     it('will create an index for a given configuration file if it did not exist', async () => {
-      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        [indexConfigFile],
+        indexConfigFileFolder,
+      )
 
       const indices = await getExistingIndices(client)
       expect(indices).toContainEqual(indexToCreate)
     })
 
     it('will delete an orphaned index with no configuration file', async () => {
-      await manageIndices(client, ['index-00000.json'], indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        ['index-00000.json'],
+        indexConfigFileFolder,
+      )
       let indices = await getExistingIndices(client)
       expect(indices).toContain('index-00000')
 
-      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        [indexConfigFile],
+        indexConfigFileFolder,
+      )
       indices = await getExistingIndices(client)
       expect(indices).not.toContain('index-00000')
     })
 
     it('will trigger a reindex from the most recent index to the newly added index', async () => {
       const existingConfig = ['index-00000.json', 'index-00001.json']
-      await manageIndices(client, existingConfig, indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        existingConfig,
+        indexConfigFileFolder,
+      )
 
       const indices = await getExistingIndices(client)
       const latestIndex = await getMostRecentIndex(client, indices)
@@ -160,6 +191,7 @@ describe('elastic orchestrator', () => {
 
       await manageIndices(
         client,
+        'index',
         [...existingConfig, 'index-00002.json'],
         indexConfigFileFolder,
       )
@@ -171,8 +203,18 @@ describe('elastic orchestrator', () => {
     })
 
     it('will trigger a reindex from the index with the same name for a new index', async () => {
-      const existingConfig = ['index-00001.json', 'another-index-00000.json']
-      await manageIndices(client, existingConfig, indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        ['index-00001.json'],
+        indexConfigFileFolder,
+      )
+      await manageIndices(
+        client,
+        'another-index',
+        ['another-index-00000.json'],
+        indexConfigFileFolder,
+      )
 
       const indices = await getExistingIndices(client)
       const latestIndex = await getMostRecentIndex(
@@ -189,7 +231,8 @@ describe('elastic orchestrator', () => {
 
       await manageIndices(
         client,
-        [...existingConfig, 'another-index-00001.json'],
+        'another-index',
+        ['another-index-00000.json', 'another-index-00001.json'],
         indexConfigFileFolder,
       )
 
@@ -210,11 +253,44 @@ describe('elastic orchestrator', () => {
         readFileSync(`${indexConfigFileFolder}/${indexConfigFile}`, 'utf-8'),
       )
 
-      await manageIndices(client, [indexConfigFile], indexConfigFileFolder)
+      await manageIndices(
+        client,
+        'index',
+        [indexConfigFile],
+        indexConfigFileFolder,
+      )
 
       const indexSettings = await getIndexSettings(indexToCreate)
 
       expect(indexSettings).toMatchObject(configSettings)
+    })
+
+    it('will not delete an index with a different prefix when managing indices with another prefix', async () => {
+      await manageIndices(
+        client,
+        'index',
+        ['index-00000.json'],
+        indexConfigFileFolder,
+      )
+      await manageIndices(
+        client,
+        'another-index',
+        ['another-index-00000.json'],
+        indexConfigFileFolder,
+      )
+      let indices = await getExistingIndices(client)
+      expect(indices).toContain('index-00000')
+      expect(indices).toContain('another-index-00000')
+
+      await manageIndices(
+        client,
+        'index',
+        [indexConfigFile],
+        indexConfigFileFolder,
+      )
+      indices = await getExistingIndices(client)
+      expect(indices).not.toContain('index-00000')
+      expect(indices).toContain('another-index-00000')
     })
   })
 })

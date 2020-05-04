@@ -48,10 +48,14 @@ export const indicesNeedUpdating = async (
 
 export const manageIndices = async (
   client: Client,
+  indexPrefix: string,
   indexConfigFiles: string[],
   indexConfigFileFolder: string,
 ) => {
-  const existingIndices = await getExistingIndices(client)
+  const unfilteredIndices = await getExistingIndices(client)
+  const existingIndices = unfilteredIndices.filter(index =>
+    index.startsWith(indexPrefix),
+  )
   const mostRecentIndex = await getMostRecentIndex(client, existingIndices)
 
   logger.info(
