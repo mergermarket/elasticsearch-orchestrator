@@ -1,4 +1,4 @@
-FROM node:10.15.3-alpine as install
+FROM node:12.13.1-alpine as install
 
 WORKDIR /usr/src/orchestrator
 
